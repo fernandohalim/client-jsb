@@ -1,5 +1,5 @@
 import * as React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import '../../../config/styles/bootstrap.min.css';
 
 function DashboardPage() {
   return (
