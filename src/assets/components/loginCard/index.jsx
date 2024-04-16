@@ -7,7 +7,6 @@ import { useState } from 'react';
 function LoginCard() {
 const [username, setUsername] = useState('');
 const [password, setPassword] = useState('');
-const [rememberMe, setRememberMe] = useState(false);
 
 const handleSubmit = (event) => {
     event.preventDefault();
@@ -35,12 +34,6 @@ return (
                             value={password}
                             onChange={(e) => setPassword(e.target.value)} />
                     </Form.Group>
-                    <Form.Check
-                        className="text-start my-3"
-                        type="checkbox"
-                        label="Ingat akun di perangkat ini"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}/>
                     <Button variant="primary" style={{ width: "100%", marginTop: '30px', height: '50px' }} type="submit">
                         Login
                     </Button>
