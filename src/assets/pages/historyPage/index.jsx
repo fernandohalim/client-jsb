@@ -3,18 +3,18 @@ import { Container } from 'react-bootstrap';
 
 //Components
 import AppBar from '../../components/appBar';
-import TransactionTable from '../../components/transactionTable';
+import HistoryTable from '../../components/historyTable';
 
-function TransactionPage() {
+function HistoryPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <AppBar/>
         <Container>
-          <h3 style={{marginBottom: '15px', marginTop: '15px' }}>Transaksi</h3>
-          <TransactionTable/>
+          <h3 style={{marginBottom: '15px', marginTop: '15px' }}>Histori Transaksi</h3>
+          <HistoryTable/>
         </Container>
     </div>
   );
 }
 
-export default TransactionPage;
+export default HistoryPage;

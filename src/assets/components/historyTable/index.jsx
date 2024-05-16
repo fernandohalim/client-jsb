@@ -4,6 +4,7 @@ import Form from 'react-bootstrap/Form';
 import Badge from 'react-bootstrap/Badge';
 import { dummy } from '../../../config/dummy/dummy';
 import { dummyCOA } from '../../../config/dummy/dummyCOA';
+import { dummyUser } from '../../../config/dummy/dummyUser';
 import DataPagination from '../dataPagination';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -11,16 +12,16 @@ function formatAmountToRupiah(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
 }
 
-function TransactionTable() {
-  //Modal
+function HistoryTable() {
+  ///Modal
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   //Search
   const [searchTerm, setSearchTerm] = useState('');
 
-  //COA Define
-  const [selectedCOA, setSelectedCOA] = useState('');
+  //User Define
+  const [selectedUser, setSelectedUser] = useState('');
 
   //Paging
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,14 +40,14 @@ function TransactionTable() {
       color: value === '0' ? 'green' : 'red'
     };
   };
-
+  
   const getCOAName = (coaCode) => {
     const coa = dummyCOA.find(coa => coa.code === coaCode);
     return coa ? `${coa.code} - ${coa.name}` : coaCode;
   };
 
   const filteredDummy = dummy.filter(transaction =>
-    (selectedCOA === '' || transaction.coa === selectedCOA) &&
+    (selectedUser === '' || transaction.user === selectedUser) &&
     (transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.user.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -70,7 +71,7 @@ function TransactionTable() {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedDummy.slice(indexOfFirstItem, indexOfFirstItem + itemsPerPage);
+  const currentItems = sortedDummy.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -100,8 +101,8 @@ function TransactionTable() {
       <Form.Select
         size='sm'
         aria-label="Default select example"
-        value={selectedCOA}
-        onChange={(e) => setSelectedCOA(e.target.value)}
+        value={selectedUser}
+        onChange={(e) => setSelectedUser(e.target.value)}
         style={{ 
           marginBottom: '10px', 
           borderRadius: '1rem', 
@@ -111,9 +112,9 @@ function TransactionTable() {
           boxShadow: 'none'
         }}
       >
-        <option value={""}>Tampilkan Semua COA</option>
-        {dummyCOA.map((coa, index) => (
-          <option key={index} value={coa.code}>{`${coa.code} - ${coa.name}`}</option>
+        <option value={""}>Tampilkan Semua User</option>
+        {dummyUser.map((user, index) => (
+          <option key={index} value={user.user}>{user.user}</option>
         ))}
       </Form.Select>
       <Form.Control
@@ -126,7 +127,7 @@ function TransactionTable() {
       
       {currentItems.length > 0 ? (
         <>
-          <Table hover responsive>
+        <Table hover responsive>
             <thead>
               <tr>
                 <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
@@ -204,4 +205,4 @@ function TransactionTable() {
   );
 }
 
-export default TransactionTable;
+export default HistoryTable;

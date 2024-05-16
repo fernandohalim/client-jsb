@@ -1,5 +1,4 @@
 import * as React from 'react';
-import '../../../config/styles/bootstrap.min.css';
 // import backgroundImage from 'tile-2822716.jpg';
 
 //Components

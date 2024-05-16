@@ -1,5 +1,4 @@
 import * as React from 'react';
-import '../../../config/styles/bootstrap.min.css';
 import { Container } from 'react-bootstrap';
 
 //Components

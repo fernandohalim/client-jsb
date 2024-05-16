@@ -11,10 +11,10 @@ function AppBar() {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="">Tambah Transaksi</Nav.Link>
+            <Nav.Link href="#/post-transaction">Tambah Transaksi</Nav.Link>
             <Nav.Link href="#/transaction">Lihat Daftar Transaksi</Nav.Link>
             <NavDropdown title="Login Sebagai: Jamal" id="basic-nav-dropdown">
-              <NavDropdown.Item href="">
+              <NavDropdown.Item href="#/history">
                 Lihat Histori
               </NavDropdown.Item>
               <NavDropdown.Item href="">
