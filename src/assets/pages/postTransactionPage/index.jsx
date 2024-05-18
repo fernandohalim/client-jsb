@@ -3,6 +3,7 @@ import { Container } from 'react-bootstrap';
 
 //Components
 import AppBar from '../../components/appBar';
+import PostTransactionModule from '../../components/postTransactionModule';
 
 function PostTransactionPage() {
   return (
@@ -10,6 +11,7 @@ function PostTransactionPage() {
         <AppBar/>
         <Container>
           <h3 style={{marginBottom: '15px', marginTop: '15px' }}>Tambah Transaksi</h3>
+          <PostTransactionModule/>
         </Container>
     </div>
   );
