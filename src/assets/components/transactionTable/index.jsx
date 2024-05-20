@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Modal, Button } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import Badge from 'react-bootstrap/Badge';
@@ -6,6 +6,11 @@ import { dummy } from '../../../config/dummy/dummy';
 import { dummyCOA } from '../../../config/dummy/dummyCOA';
 import DataPagination from '../dataPagination';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { API } from '../../../config/api/api';
+import AlertModal from '../alertModal/index.jsx';
+import LoadingSpinner from '../loadingSpinner/index.jsx';
+import { DateFormat } from '../dateFormat/index.jsx';
+import { DateFormatShort } from '../dateFormatShort/index.jsx';
 
 function formatAmountToRupiah(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
@@ -14,7 +19,10 @@ function formatAmountToRupiah(amount) {
 function TransactionTable() {
   //Modal
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showModalDetail, setShowModalDetail] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   //Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,9 +37,40 @@ function TransactionTable() {
   //Sorting
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
+  //Data Fetch
+  const [transaction, setTransaction] = useState([]);
+  const [COA, setCOA] = useState([]);
+  const fetchTransaction = async () => {
+    try {
+      const response = await API.get('transaction/get-transaction');
+      setTransaction(response.data);
+      console.log(response.data);
+    } catch (error) {
+      setModalMessage('Gagal Mengambil Data: ' + error);
+      setShowModal(true);
+      console.error('Gagal Mengambil Data:', error);
+    } finally{
+      setLoading(false);
+    }
+  };
+
+  const fetchCOA = async () => {
+    try {
+      const response = await API.get('transaction/get-coa');
+      setCOA(response.data);
+      console.log(response.data);
+    } catch (error) {
+      setModalMessage('Gagal Mengambil Data: ' + error);
+      setShowModal(true);
+      console.error('Gagal Mengambil Data:', error);
+    } finally{
+      setLoading(false);
+    }
+  };
+
   const handleRowClick = (transaction) => {
     setSelectedTransaction(transaction);
-    setShowModal(true);
+    setShowModalDetail(true);
   };
 
   const getAmountStyle = (value) => {
@@ -41,18 +80,38 @@ function TransactionTable() {
   };
 
   const getCOAName = (coaCode) => {
-    const coa = dummyCOA.find(coa => coa.code === coaCode);
-    return coa ? `${coa.code} - ${coa.name}` : coaCode;
+    const coa = COA.find(coa => coa.id.toString() === coaCode.toString());
+    return coa ? `${coa.id} - ${coa.name}` : coaCode;
   };
 
-  const filteredDummy = dummy.filter(transaction =>
-    (selectedCOA === '' || transaction.coa === selectedCOA) &&
+  const filteredData = transaction.filter(transaction =>
+    (selectedCOA === '' || transaction.coaid === selectedCOA) &&
     (transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.user.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const sortedDummy = [...filteredDummy].sort((a, b) => {
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (sortConfig.key === 'date') {
+      const dateA = new Date(a.updatedAt);
+      const dateB = new Date(b.updatedAt);
+  
+      const dayA = dateA.getDate();
+      const monthA = dateA.getMonth();
+      const yearA = dateA.getFullYear();
+  
+      const dayB = dateB.getDate();
+      const monthB = dateB.getMonth();
+      const yearB = dateB.getFullYear();
+  
+      if (yearA !== yearB) {
+        return sortConfig.direction === 'ascending' ? yearA - yearB : yearB - yearA;
+      }
+      if (monthA !== monthB) {
+        return sortConfig.direction === 'ascending' ? monthA - monthB : monthB - monthA;
+      }
+      return sortConfig.direction === 'ascending' ? dayA - dayB : dayB - dayA;
+    }
     if (sortConfig.key) {
       const isNumeric = !isNaN(a[sortConfig.key]);
       const aValue = isNumeric ? parseFloat(a[sortConfig.key]) : a[sortConfig.key].toString().toLowerCase();
@@ -70,7 +129,7 @@ function TransactionTable() {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedDummy.slice(indexOfFirstItem, indexOfFirstItem + itemsPerPage);
+  const currentItems = sortedData.slice(indexOfFirstItem, indexOfFirstItem + itemsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -95,8 +154,15 @@ function TransactionTable() {
     return <i className="fas fa-sort-down"></i>;
   };
 
+  useEffect(()=>{
+    setLoading(true);
+    fetchTransaction();
+    fetchCOA();
+  }, []);
+
   return (
     <>
+      {loading && <LoadingSpinner />}
       <Form.Select
         size='sm'
         aria-label="Default select example"
@@ -112,8 +178,8 @@ function TransactionTable() {
         }}
       >
         <option value={""}>Tampilkan Semua COA</option>
-        {dummyCOA.map((coa, index) => (
-          <option key={index} value={coa.code}>{`${coa.code} - ${coa.name}`}</option>
+        {COA.map((coa, index) => (
+          <option key={index} value={coa.id}>{`${coa.id} - ${coa.name}`}</option>
         ))}
       </Form.Select>
       <Form.Control
@@ -132,11 +198,11 @@ function TransactionTable() {
                 <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
                   # {getSortIcon('date')}
                 </th>
-                <th onClick={() => handleSort('coa')} style={{ cursor: 'pointer' }}>
-                  COA {getSortIcon('coa')}
+                <th style={{ cursor: 'pointer' }}>
+                  COA
                 </th>
-                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                  Transaksi {getSortIcon('name')}
+                <th style={{ cursor: 'pointer' }}>
+                  Transaksi
                 </th>
                 <th onClick={() => handleSort('amount')} style={{ cursor: 'pointer' }}>
                   Nominal {getSortIcon('amount')}
@@ -146,8 +212,8 @@ function TransactionTable() {
             <tbody>
               {currentItems.map((transaction, index) => (
                 <tr key={index} onClick={() => handleRowClick(transaction)}>
-                  <td>{transaction.date} - {transaction.time}</td>
-                  <td><Badge bg="primary">{getCOAName(transaction.coa)}</Badge></td>
+                  <td>{DateFormatShort(transaction.updatedAt)}</td>
+                  <td><Badge bg="primary">{getCOAName(transaction.coaid)}</Badge></td>
                   <td>{transaction.name}</td>
                   <td style={getAmountStyle(transaction.value)}>{formatAmountToRupiah(transaction.amount)}</td>
                 </tr>
@@ -158,7 +224,7 @@ function TransactionTable() {
           <div style={{ margin: '20px 0px 20px 0px', display: 'flex', justifyContent: 'center' }}>
             <DataPagination
               currentPage={currentPage}
-              totalPages={Math.ceil(sortedDummy.length / itemsPerPage)}
+              totalPages={Math.ceil(sortedData.length / itemsPerPage)}
               onPageChange={paginate}
             />
           </div>
@@ -169,19 +235,18 @@ function TransactionTable() {
         </div>
       )}
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModalDetail} onHide={() => setShowModalDetail(false)}>
         <Modal.Header>
           <Modal.Title>Detil Transaksi</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedTransaction && (
             <div>
-              <p><strong>Tanggal Transaksi:</strong> {selectedTransaction.date}</p>
-              <p><strong>Waktu Transaksi:</strong> {selectedTransaction.time}</p>
+              <p><strong>Tanggal Transaksi:</strong> {DateFormat(selectedTransaction.updatedAt)}</p>
               <p><strong>Transaksi:</strong> {selectedTransaction.name}</p>
-              <p><strong>Kode COA:</strong> <Badge bg="primary">{getCOAName(selectedTransaction.coa)}</Badge></p>
+              <p><strong>Kode COA:</strong> <Badge bg="primary">{getCOAName(selectedTransaction.coaid)}</Badge></p>
               <p><strong>Deskripsi:</strong> {selectedTransaction.description}</p>
-              <p><strong>Nominal:</strong> {formatAmountToRupiah(selectedTransaction.amount)}</p>
+              <p><strong>Nominal:</strong> <span style={getAmountStyle(selectedTransaction.value)}>{formatAmountToRupiah(selectedTransaction.amount)}</span></p>
               <p><strong>Dibuat oleh:</strong> {selectedTransaction.user}</p>
             </div>
           )}
@@ -192,14 +257,17 @@ function TransactionTable() {
               Lihat Lampiran
             </Button>
           )}
-          <Button variant="danger" onClick={null}>
-            Hapus Transaksi
-          </Button>
-          <Button variant="primary" onClick={() => setShowModal(false)}>
+          <Button variant="primary" onClick={() => setShowModalDetail(false)}>
             Tutup
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <AlertModal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          message={modalMessage}
+      />
     </>
   );
 }
