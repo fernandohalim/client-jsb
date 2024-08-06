@@ -22,7 +22,7 @@ function COAInput({ value, onChange, options }) {
   }, [inputValue, options]);
 
   const handleOptionSelect = (option) => {
-    setInputValue(`${option.id} - ${option.name}`);
+    setInputValue(`${option.code} - ${option.name}`);
     onChange(option.id);
     setShowDropdown(false);
   };
@@ -45,7 +45,7 @@ function COAInput({ value, onChange, options }) {
               key={option.id}
               onClick={() => handleOptionSelect(option)}
             >
-              {`${option.id} - ${option.name}`}
+              {`${option.code} - ${option.name}`}
             </Dropdown.Item>
           ))}
         </DropdownButton>

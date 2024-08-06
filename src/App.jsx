@@ -7,6 +7,9 @@ import LoginPage from './assets/pages/loginPage';
 import TransactionPage from './assets/pages/transactionPage';
 import PostTransactionPage from './assets/pages/postTransactionPage';
 import HistoryPage from './assets/pages/historyPage';
+import COAPage from './assets/pages/COAPage';
+import UserPage from './assets/pages/userPage';
+import JournalPage from './assets/pages/journalPage';
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
             <Route path="/transaction" element={<TransactionPage />}/>
             <Route path="/post-transaction" element={<PostTransactionPage />}/>
             <Route path="/history" element={<HistoryPage />}/>
+            <Route path="/coa" element={<COAPage />}/>
+            <Route path="/user" element={<UserPage />}/>
+            <Route path="/journal" element={<JournalPage />}/>
           </Routes>
           
       </HashRouter>

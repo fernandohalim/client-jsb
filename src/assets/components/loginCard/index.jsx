@@ -28,17 +28,17 @@ const navigate = useNavigate();
         return;
       }
 
-      const response = await API.post("user/login-user", {
+      const response = await API.post("user/login", {
         username,
         password,
       });
 
-      console.log(response.data.accessToken);
+      console.log(response);
       navigate('/');
     } catch (error) {
       if (error.response) {
         console.error("Server Error", error.response.data);
-        setModalMessage(error.response.data.error);
+        setModalMessage(error.response.data.message);
       } else if (error.request) {
         console.error("No Response", error.request);
         setModalMessage('No response from the server');

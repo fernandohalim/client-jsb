@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Modal, Button } from 'react-bootstrap';
+import { Table, Modal, Button, Image  } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import Badge from 'react-bootstrap/Badge';
 import { dummy } from '../../../config/dummy/dummy';
@@ -23,12 +23,10 @@ function TransactionTable() {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
   //Search
   const [searchTerm, setSearchTerm] = useState('');
-
-  //COA Define
-  const [selectedCOA, setSelectedCOA] = useState('');
 
   //Paging
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,25 +37,10 @@ function TransactionTable() {
 
   //Data Fetch
   const [transaction, setTransaction] = useState([]);
-  const [COA, setCOA] = useState([]);
   const fetchTransaction = async () => {
     try {
-      const response = await API.get('transaction/get-transaction');
+      const response = await API.get('transaction');
       setTransaction(response.data);
-      console.log(response.data);
-    } catch (error) {
-      setModalMessage('Gagal Mengambil Data: ' + error);
-      setShowModal(true);
-      console.error('Gagal Mengambil Data:', error);
-    } finally{
-      setLoading(false);
-    }
-  };
-
-  const fetchCOA = async () => {
-    try {
-      const response = await API.get('transaction/get-coa');
-      setCOA(response.data);
       console.log(response.data);
     } catch (error) {
       setModalMessage('Gagal Mengambil Data: ' + error);
@@ -79,16 +62,10 @@ function TransactionTable() {
     };
   };
 
-  const getCOAName = (coaCode) => {
-    const coa = COA.find(coa => coa.id.toString() === coaCode.toString());
-    return coa ? `${coa.id} - ${coa.name}` : coaCode;
-  };
-
   const filteredData = transaction.filter(transaction =>
-    (selectedCOA === '' || transaction.coaid === selectedCOA) &&
     (transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.user.toLowerCase().includes(searchTerm.toLowerCase()))
+    transaction.user.username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -157,31 +134,11 @@ function TransactionTable() {
   useEffect(()=>{
     setLoading(true);
     fetchTransaction();
-    fetchCOA();
   }, []);
 
   return (
     <>
       {loading && <LoadingSpinner />}
-      <Form.Select
-        size='sm'
-        aria-label="Default select example"
-        value={selectedCOA}
-        onChange={(e) => setSelectedCOA(e.target.value)}
-        style={{ 
-          marginBottom: '10px', 
-          borderRadius: '1rem', 
-          padding: '2px 4px 2px 4px', 
-          border: 'none',
-          outline: 'none', 
-          boxShadow: 'none'
-        }}
-      >
-        <option value={""}>Tampilkan Semua COA</option>
-        {COA.map((coa, index) => (
-          <option key={index} value={coa.id}>{`${coa.id} - ${coa.name}`}</option>
-        ))}
-      </Form.Select>
       <Form.Control
         type="text"
         placeholder="Cari Data..."
@@ -199,9 +156,6 @@ function TransactionTable() {
                   # {getSortIcon('date')}
                 </th>
                 <th style={{ cursor: 'pointer' }}>
-                  COA
-                </th>
-                <th style={{ cursor: 'pointer' }}>
                   Transaksi
                 </th>
                 <th onClick={() => handleSort('amount')} style={{ cursor: 'pointer' }}>
@@ -213,7 +167,6 @@ function TransactionTable() {
               {currentItems.map((transaction, index) => (
                 <tr key={index} onClick={() => handleRowClick(transaction)}>
                   <td>{DateFormatShort(transaction.updatedAt)}</td>
-                  <td><Badge bg="primary">{getCOAName(transaction.coaid)}</Badge></td>
                   <td>{transaction.name}</td>
                   <td style={getAmountStyle(transaction.value)}>{formatAmountToRupiah(transaction.amount)}</td>
                 </tr>
@@ -244,20 +197,39 @@ function TransactionTable() {
             <div>
               <p><strong>Tanggal Transaksi:</strong> {DateFormat(selectedTransaction.updatedAt)}</p>
               <p><strong>Transaksi:</strong> {selectedTransaction.name}</p>
-              <p><strong>Kode COA:</strong> <Badge bg="primary">{getCOAName(selectedTransaction.coaid)}</Badge></p>
               <p><strong>Deskripsi:</strong> {selectedTransaction.description}</p>
               <p><strong>Nominal:</strong> <span style={getAmountStyle(selectedTransaction.value)}>{formatAmountToRupiah(selectedTransaction.amount)}</span></p>
-              <p><strong>Dibuat oleh:</strong> {selectedTransaction.user}</p>
+              <p><strong>Dibuat oleh:</strong> {selectedTransaction.user.username}</p>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
           {selectedTransaction && selectedTransaction.attachment !== null && (
-            <Button variant="secondary">
+            <Button variant="secondary" onClick={() => setShowAttachmentModal(true)}>
               Lihat Lampiran
             </Button>
           )}
           <Button variant="primary" onClick={() => setShowModalDetail(false)}>
+            Tutup
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showAttachmentModal} onHide={() => setShowAttachmentModal(false)}>
+        <Modal.Header>
+          <Modal.Title>Lampiran</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedTransaction && (
+            <Image
+              src={"http://localhost:5000/" + selectedTransaction.attachment}
+              alt="Attachment"
+              style={{width: '100%', aspectRatio: '1/1', objectFit: 'cover' }}
+            />
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowAttachmentModal(false)}>
             Tutup
           </Button>
         </Modal.Footer>

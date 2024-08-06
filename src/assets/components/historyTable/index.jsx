@@ -31,22 +31,8 @@ function HistoryTable() {
 
   const fetchHistory = async () => {
     try {
-      const response = await API.get('transaction/get-notification');
+      const response = await API.get('history');
       setHistory(response.data);
-      console.log(response.data);
-    } catch (error) {
-      setModalMessage('Gagal Mengambil Data: ' + error);
-      setShowModal(true);
-      console.error('Gagal Mengambil Data:', error);
-    } finally{
-      setLoading(false);
-    }
-  };
-
-  const fetchCOA = async () => {
-    try {
-      const response = await API.get('transaction/get-coa');
-      setCOA(response.data);
       console.log(response.data);
     } catch (error) {
       setModalMessage('Gagal Mengambil Data: ' + error);
@@ -60,7 +46,7 @@ function HistoryTable() {
   const handleDelete = async (id) => {
     try {
       const transactionId = id.toString()
-      await API.delete(`transaction/delete-transaction/${transactionId}`);
+      await API.patch(`transaction/status/${transactionId}`);
       setShowModalDetail(false)
       setModalMessage('Berhasil Menghapus Transaksi');
       setShowModal(true);
@@ -82,6 +68,12 @@ function HistoryTable() {
       color: value === '0' ? 'green' : 'red'
     };
   };
+
+  const getStatusStyle = (value) => {
+    return {
+      color: value === 'active' ? 'green' : 'red'
+    };
+  };
   
   const getCOAName = (coaCode) => {
     const coa = COA.find(coa => coa.id.toString() === coaCode.toString());
@@ -97,7 +89,6 @@ function HistoryTable() {
   useEffect(()=>{
     setLoading(true);
     fetchHistory();
-    fetchCOA();
   }, []);
 
   return (
@@ -106,7 +97,7 @@ function HistoryTable() {
       {currentItems.length > 0 ? (
         <>
           {currentItems.map((history, index) => (
-            <Card onClick={()=>(handleRowClick(history.transaction))} style={{marginBottom: '10px'}}>
+            <Card onClick={()=>(handleRowClick(history))} style={{marginBottom: '10px'}}>
               <Card.Body>
                 <Card.Title>{history.name}</Card.Title>
                 <Card.Text>
@@ -137,24 +128,25 @@ function HistoryTable() {
         <Modal.Body>
           {selectedTransaction && (
             <div>
+              <p><strong>Status Transaksi:</strong> <span style={getStatusStyle(selectedTransaction.transaction.status)}>{selectedTransaction.transaction.status}</span></p>
               <p><strong>Tanggal Transaksi:</strong> {DateFormat(selectedTransaction.updatedAt)}</p>
-              <p><strong>Transaksi:</strong> {selectedTransaction.name}</p>
-              <p><strong>Kode COA:</strong> <Badge bg="primary">{getCOAName(selectedTransaction.coaid)}</Badge></p>
-              <p><strong>Deskripsi:</strong> {selectedTransaction.description}</p>
-              <p><strong>Nominal:</strong> <span style={getAmountStyle(selectedTransaction.value)}>{formatAmountToRupiah(selectedTransaction.amount)}</span></p>
-              <p><strong>Dibuat oleh:</strong> {selectedTransaction.user}</p>
+              <p><strong>Transaksi:</strong> {selectedTransaction.transaction.name}</p>
+              <p><strong>Deskripsi:</strong> {selectedTransaction.transaction.description}</p>
+              <p><strong>Nominal:</strong> <span style={getAmountStyle(selectedTransaction.transaction.value)}>{formatAmountToRupiah(selectedTransaction.transaction.amount)}</span></p>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
-          {selectedTransaction && selectedTransaction.attachment !== null && (
+          {selectedTransaction && selectedTransaction.transaction.attachment !== null && (
             <Button variant="secondary">
               Lihat Lampiran
             </Button>
           )}
-          <Button variant="danger" onClick={() => handleDelete(selectedTransaction.id)}>
-            Hapus Transaksi
-          </Button>
+          {selectedTransaction && selectedTransaction.transaction.status === 'active' && (
+            <Button variant="danger" onClick={() => handleDelete(selectedTransaction.transactionId)}>
+              Hapus Transaksi
+            </Button>
+          )}
           <Button variant="primary" onClick={() => setShowModalDetail(false)}>
             Tutup
           </Button>
